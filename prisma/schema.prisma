@@ -1,0 +1,45 @@
+datasource db {
+  provider = "mongodb"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Camera {
+  id                   String     @id @default(auto()) @map("_id") @db.ObjectId
+  slug                 String     @unique // e.g. "sony-a6700"
+  name                 String
+  brand                String
+  type                 String // "aps-c-mirrorless" | "full-frame-mirrorless" | "fixed-lens-compact"
+  sensor               String
+  priceUSD             Int
+  bestFor              String // short positioning line, e.g. "Travel and street photography"
+  rotationFrameBaseUrl String // e.g. "/rotations/sony-a6700"
+  frameCount           Int        @default(40)
+  hotspots             Hotspot[]
+  menuNodes            MenuNode[]
+  createdAt            DateTime   @default(now())
+}
+
+model Hotspot {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  cameraId        String   @db.ObjectId
+  camera          Camera   @relation(fields: [cameraId], references: [id], onDelete: Cascade)
+  label           String // "Mode dial"
+  description     String // "Switch between auto, manual, and custom shooting modes."
+  xPercent        Float // position over the rotation frame, 0-100
+  yPercent        Float
+  frameRangeStart Int      @default(0) // which rotation frames this hotspot is visible on
+  frameRangeEnd   Int      @default(39)
+}
+
+model MenuNode {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  cameraId    String   @db.ObjectId
+  camera          Camera   @relation(fields: [cameraId], references: [id], onDelete: Cascade)
+  parentId    String? // null = top-level menu item
+  label       String // "Shooting" or "Image quality"
+  description String? // shown when this is a leaf node
+  order       Int      @default(0)
+}
